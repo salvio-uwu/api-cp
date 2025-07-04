@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Códigos Postales de México (Simple)</title>
+    <!-- Enlace a Tailwind CSS para un estilo rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados para la fuente y algunos ajustes generales */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Un gris claro para el fondo */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Alinea al inicio verticalmente para dejar espacio arriba */
+            min-height: 100vh; /* Asegura que ocupe al menos toda la altura de la ventana */
+            padding: 20px; /* Espaciado general alrededor del contenido */
+        }
+        .container {
+            background-color: #ffffff; /* Fondo blanco para el contenedor principal */
+            border-radius: 12px; /* Esquinas redondeadas */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* Sombra sutil */
+            padding: 30px; /* Relleno interno */
+            width: 100%;
+            max-width: 500px; /* Ancho máximo para el contenedor */
+            margin-top: 50px; /* Margen superior para centrar visualmente */
+        }
+        /* Estilos para los grupos de entrada (label + input) */
+        .input-group label {
+            font-weight: 600; /* Seminegrita */
+            color: #333; /* Color de texto oscuro */
+            margin-bottom: 6px; /* Espacio debajo de la etiqueta */
+        }
+        /* Estilos para los campos de entrada de texto */
+        .input-group input[type="text"] {
+            border: 1px solid #d1d5db; /* Borde gris claro */
+            border-radius: 8px; /* Esquinas redondeadas */
+            padding: 10px 14px; /* Relleno interno */
+            width: 100%;
+            box-sizing: border-box; /* Asegura que padding no aumente el ancho total */
+            transition: border-color 0.2s; /* Transición suave para el foco */
+        }
+        /* Estilos al enfocar un campo de entrada */
+        .input-group input[type="text"]:focus {
+            outline: none; /* Elimina el contorno por defecto del navegador */
+            border-color: #3b82f6; /* Color azul de Tailwind al enfocar */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Sombra de enfoque azul */
+        }
+        /* Estilos para el grupo de resultados */
+        .result-group {
+            border-top: 1px solid #e5e7eb; /* Borde superior para separar secciones */
+            padding-top: 20px; /* Relleno superior */
+            margin-top: 20px; /* Margen superior */
+        }
+        /* Estilos para cada elemento de resultado individual */
+        .result-item {
+            margin-bottom: 15px; /* Espacio entre los elementos de resultado */
+        }
+        .result-item label {
+            font-weight: 600;
+            color: #4b5563; /* Color de texto más oscuro para las etiquetas */
+        }
+        /* Estilos para los campos de resultado (solo lectura) */
+        .result-item input[type="text"] {
+            background-color: #f9fafb; /* Fondo ligeramente gris para campos de solo lectura */
+            border: 1px solid #e5e7eb; /* Borde suave */
+            color: #4b5563; /* Color de texto */
+        }
+        /* Estilo para el indicador de carga */
+        #loadingMessage {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Buscador de Códigos Postales</h1>
+
+        <div class="input-group mb-6">
+            <label for="codigoPostal" class="block text-sm">Código Postal:</label>
+            <input type="text" id="codigoPostal" placeholder="Ej. 64000" maxlength="5"
+                   class="mt-1 block w-full rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        
+        <button onclick="buscarCodigoPostal()"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg
+                       shadow-md hover:shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+            Buscar Código Postal
+        </button>
+
+        <p id="loadingMessage" class="text-gray-600 text-center mt-4 text-sm hidden">Cargando datos de códigos postales...</p>
+        <p id="errorMessage" class="text-red-600 text-center mt-4 text-sm"></p>
+
+        <div class="result-group">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Información del Código Postal:</h2>
+            
+            <div class="result-item">
+                <label for="asentamiento" class="block text-sm">Colonia/Asentamiento:</label>
+                <input type="text" id="asentamiento" readonly
+                       class="mt-1 block w-full rounded-lg shadow-sm">
+            </div>
+
+            <div class="result-item">
+                <label for="tipoAsentamiento" class="block text-sm">Tipo de Asentamiento:</label>
+                <input type="text" id="tipoAsentamiento" readonly
+                       class="mt-1 block w-full rounded-lg shadow-sm">
+            </div>
+
+            <div class="result-item">
+                <label for="municipio" class="block text-sm">Municipio:</label>
+                <input type="text" id="municipio" readonly
+                       class="mt-1 block w-full rounded-lg shadow-sm">
+            </div>
+
+            <div class="result-item">
+                <label for="estado" class="block text-sm">Estado:</label>
+                <input type="text" id="estado" readonly
+                       class="mt-1 block w-full rounded-lg shadow-sm">
+            </div>
+
+            <div class="result-item">
+                <label for="ciudad" class="block text-sm">Ciudad:</label>
+                <input type="text" id="ciudad" readonly
+                       class="mt-1 block w-full rounded-lg shadow-sm">
+            </div>
+            <!-- Puedes añadir más campos si los extraes de tu TXT y los quieres mostrar.
+                 Asegúrate de que los IDs coincidan con las claves en el objeto de datos. -->
+            <div class="result-item">
+                <label for="dZona" class="block text-sm">Zona:</label>
+                <input type="text" id="dZona" readonly
+                       class="mt-1 block w-full rounded-lg shadow-sm">
+            </div>
+            <div class="result-item">
+                <label for="tipoAsentamientoDesc" class="block text-sm">Tipo Asentamiento (Desc.):</label>
+                <input type="text" id="tipoAsentamientoDesc" readonly
+                       class="mt-1 block w-full rounded-lg shadow-sm">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Objeto para almacenar los datos de códigos postales, indexados por CP para búsquedas rápidas.
+        let cpData = {}; 
+        // Bandera para saber si los datos ya se cargaron.
+        let isDataLoaded = false;
+        
+        // Expresión regular para parsear cada línea del archivo TXT.
+        // Ahora se basa en el formato pipe-delimited que proporcionaste.
+        // ^ : Inicio de la línea
+        // ([^|]+) : Captura cualquier carácter que no sea un pipe, una o más veces.
+        // ([^|]*) : Captura cualquier carácter que no sea un pipe, cero o más veces (para campos vacíos como '||').
+        // \| : Coincide con el carácter pipe literal.
+        // $ : Fin de la línea.
+        const regexPattern = /^([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]*)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)$/;
+
+        /**
+         * Función para parsear una línea del archivo TXT usando expresiones regulares.
+         * @param {string} line - La línea de texto a parsear.
+         * @param {number} lineNumber - El número de línea para depuración.
+         * @returns {object|null} Un objeto con los datos del CP o null si no coincide.
+         */
+        function parseLine(line, lineNumber) {
+            const match = line.match(regexPattern);
+
+            if (match) {
+                // Los grupos de captura en JavaScript son 1-indexed.
+                // Mapeamos los grupos capturados a nombres descriptivos.
+                return {
+                    codigo_postal: match[1].trim(),
+                    asentamiento: match[2].trim(),
+                    tipo_asentamiento: match[3].trim(),
+                    municipio: match[4].trim(),
+                    estado: match[5].trim(),
+                    ciudad: match[6].trim(), // Asumiendo que el 6to campo es la ciudad
+                    c_estado_code: match[7].trim(),
+                    c_oficina_code: match[8].trim(),
+                    c_cp_code: match[9].trim(),
+                    empty_field_1: match[10].trim(), // Campo que estaba vacío (||)
+                    c_mnpio_code: match[11].trim(),
+                    id_asenta_cpcons_code: match[12].trim(),
+                    d_zona: match[13].trim(), // d_zona
+                    tipo_asentamiento_desc: match[14].trim(), // "Urbano", "Rural" etc.
+                    c_cve_ciudad_code: match[15].trim(), // c_cve_ciudad
+                };
+            }
+            console.warn(`Línea ${lineNumber} no coincide con el patrón esperado: "${line}"`); // Muestra la línea que falló
+            return null;
+        }
+
+        /**
+         * Carga el archivo codigos_postales.txt y procesa sus datos.
+         * Esta función se llama automáticamente al cargar la página.
+         */
+        async function loadPostalCodesData() {
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessageDiv = document.getElementById('errorMessage');
+            loadingMessage.classList.remove('hidden'); // Muestra el mensaje de carga
+            errorMessageDiv.textContent = ''; // Limpia cualquier error anterior
+
+            try {
+                // Realiza la solicitud para obtener el archivo TXT.
+                const response = await fetch('codigos_postales.txt');
+                if (!response.ok) {
+                    throw new Error(`No se pudo cargar el archivo de datos: ${response.status} ${response.statusText}`);
+                }
+                
+                // Obtiene el contenido del archivo como texto.
+                // Si el archivo tiene caracteres especiales (ñ, acentos) y no se muestra bien,
+                // ES MUY PROBABLE QUE NECESITES GUARDAR 'codigos_postales.txt' como UTF-8 (sin BOM).
+                const text = await response.text(); 
+
+                const lines = text.split('\n');
+                console.log(`Total de líneas leídas del TXT: ${lines.length}`);
+                let parsedCount = 0;
+
+                // Saltar la primera línea (el encabezado descriptivo del archivo)
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim(); // Elimina espacios en blanco al inicio y final de la línea
+                    if (line) { // Procesa solo líneas no vacías
+                        const parsed = parseLine(line, i + 1); // Pasa el número de línea para depuración
+                        if (parsed) {
+                            // Almacena los datos en el objeto cpData, usando el código postal como clave.
+                            // Esto permite búsquedas O(1) (muy rápidas).
+                            cpData[parsed.codigo_postal] = parsed;
+                            parsedCount++;
+                        }
+                    }
+                }
+                isDataLoaded = true;
+                console.log(`Datos de ${parsedCount} códigos postales cargados exitosamente.`);
+                loadingMessage.classList.add('hidden'); // Oculta el mensaje de carga
+
+                if (parsedCount === 0 && lines.length > 1) { // Si hay líneas de datos pero ninguna se parseó
+                    errorMessageDiv.textContent = 'No se pudo procesar ningún código postal. Verifica el formato del archivo TXT y la expresión regular en la consola.';
+                }
+
+            } catch (error) {
+                console.error('Error al cargar o procesar los datos:', error);
+                errorMessageDiv.textContent = 'Error al cargar los datos de códigos postales. Inténtalo de nuevo más tarde.';
+                loadingMessage.classList.add('hidden'); // Oculta el mensaje de carga
+            }
+        }
+
+        /**
+         * Función asíncrona para buscar información de un código postal.
+         * Realiza la búsqueda en los datos cargados en memoria.
+         */
+        async function buscarCodigoPostal() {
+            if (!isDataLoaded) {
+                document.getElementById('errorMessage').textContent = 'Los datos aún se están cargando. Por favor, espera un momento.';
+                return;
+            }
+
+            const codigoPostalInput = document.getElementById('codigoPostal');
+            const codigoPostal = codigoPostalInput.value.trim();
+            const errorMessageDiv = document.getElementById('errorMessage');
+
+            // Limpiar resultados anteriores y mensajes de error antes de una nueva búsqueda
+            errorMessageDiv.textContent = '';
+            document.getElementById('asentamiento').value = '';
+            document.getElementById('tipoAsentamiento').value = '';
+            document.getElementById('municipio').value = '';
+            document.getElementById('estado').value = '';
+            document.getElementById('ciudad').value = '';
+            document.getElementById('dZona').value = ''; 
+            document.getElementById('tipoAsentamientoDesc').value = ''; 
+
+            // Validar que el código postal tenga 5 dígitos y sea numérico
+            if (codigoPostal.length !== 5 || !/^\d+$/.test(codigoPostal)) {
+                errorMessageDiv.textContent = 'Por favor, ingresa un código postal válido de 5 dígitos.';
+                return;
+            }
+
+            // Busca el código postal directamente en el objeto cpData.
+            const cpInfo = cpData[codigoPostal];
+
+            if (cpInfo) {
+                // Si se encuentra la información, rellena los campos.
+                document.getElementById('asentamiento').value = cpInfo.asentamiento || 'N/A';
+                document.getElementById('tipoAsentamiento').value = cpInfo.tipo_asentamiento || 'N/A';
+                document.getElementById('municipio').value = cpInfo.municipio || 'N/A';
+                document.getElementById('estado').value = cpInfo.estado || 'N/A';
+                document.getElementById('ciudad').value = cpInfo.ciudad || 'N/A'; 
+                document.getElementById('dZona').value = cpInfo.d_zona || 'N/A'; 
+                document.getElementById('tipoAsentamientoDesc').value = cpInfo.tipo_asentamiento_desc || 'N/A'; 
+            } else {
+                // Si el código postal no se encuentra en los datos cargados.
+                errorMessageDiv.textContent = `Código postal ${codigoPostal} no encontrado.`;
+            }
+        }
+
+        // Llama a la función para cargar los datos cuando el DOM esté completamente cargado.
+        document.addEventListener('DOMContentLoaded', loadPostalCodesData);
+    </script>
+</body>
+</html>
